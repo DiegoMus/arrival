@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Reservas</title>
+    <link rel="stylesheet" href="{{ url_for('styles', filename='style.css') }}">
+</head>
+<body>
+    <h1>Reservas</h1>
+
+    <form id="form-reserva">
+        <input type="number" placeholder="Asientos" name="asientos" required>
+        <input type="number" placeholder="Estado" name="estado" required>
+        <input type="number" placeholder="Valor Cobro" name="varlocobro" required>
+        <input type="number" placeholder="Valor Total" name="valortotal" required>
+        <input type="number" placeholder="ID Cliente" name="idcliente" required>
+        <input type="number" placeholder="ID Estado" name="idestado" required>
+        <input type="number" placeholder="ID Tarjeta" name="idtarjeta" required>
+        <input type="number" placeholder="ID Vuelo" name="idvuelo" required>
+        <button type="submit">Crear Reserva</button>
+    </form>
+
+    <table id="tabla-reservas">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Asientos</th>
+                <th>Estado</th>
+                <th>Valor Total</th>
+                <th>IDCLIENTE</th>
+                <th>IDESTADO</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        async function cargarReservas() {
+            const res = await fetch('/reservas');
+            const reservas = await res.json();
+            const cuerpo = document.querySelector('#tabla-reservas tbody');
+            cuerpo.innerHTML = '';
+
+            reservas.forEach(r => {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td>${r.IDRESERVA}</td>
+                    <td>${r.ASIENTOS}</td>
+                    <td>${r.ESTADO}</td>
+                    <td>${r.VALORTOTAL}</td>
+                    <td>${r.IDCLIENTE}</td>
+                    <td>${r.IDESTADO}</td>
+
+                    
+                    <td>
+                        <button onclick="eliminar(${r.IDRESERVA})">Eliminar</button>
+                        <button onclick="cancelar(${r.IDRESERVA})">Cancelar Reserva</button>
+                    </td>
+                    
+                        
+                    
+                `;
+                cuerpo.appendChild(fila);
+            });
+        }
+
+        async function eliminar(id) {
+            await fetch(`/reservas/${id}`, { method: 'DELETE' });
+            cargarReservas();
+        }
+
+        async function cancelar(id) {
+            await fetch(`/reservas/${id}`, { 
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            cargarReservas();
+        }
+
+
+        document.getElementById('form-reserva').addEventListener('submit', async e => {
+            e.preventDefault();
+            const datos = Object.fromEntries(new FormData(e.target).entries());
+            // Convertir todos los valores a número (excepto strings si los hubiera)
+            for (let clave in datos) datos[clave] = parseInt(datos[clave]);
+
+            // Agregar campo cancelación como null
+            datos.fechacancela = null;
+
+            await fetch('/reservas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+
+            e.target.reset();
+            cargarReservas();
+        });
+
+        cargarReservas();
+    </script>
+
+<!--<div class="container">
+    <div class="hello-kitty"></div>
+    <div class="eye-container">
+      <div class="eye left-eye"></div>
+      <div class="eye right-eye"></div>
+    </div>
+    <div class="nose"></div>
+    <div class="whisker w1"></div>
+    <div class="whisker w2"></div>
+    <div class="whisker w3"></div>
+    <div class="whisker w4"></div>
+    <div class="whisker w5"></div>
+    <div class="whisker w6"></div>
+    <div class="ear left-ear"></div>
+    <div class="ear right-ear"></div>
+    <div class="bow bow-center"></div>
+    <div class="bow bow-left"></div>
+    <div class="bow bow-right"></div>
+    <div class="bow bow-detail-left"></div>
+    <div class="bow bow-detail-right"></div>
+    <div class="ear-detail ear-detail-left"></div>
+    <div class="ear-detail ear-detail-right"></div>
+    <div class="ear-line"></div>
+    <b><p class="text">Hello Kitty</p></b>
+  </div> -->
+</body>
+</html>

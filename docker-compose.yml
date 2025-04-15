@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  oracle-xe:
+    image: gvenzl/oracle-xe:21.3.0
+    container_name: oracle-xe
+    ports:
+      - "1521:1521"    # Puerto para la base de datos
+      - "5500:5500"    # Puerto para Oracle Enterprise Manager
+    environment:
+      ORACLE_PASSWORD: "Seguro25"  # Establece la contraseña para SYS y SYSTEM
+      APP_USER: "appuser"               # Usuario de aplicación (opcional)
+      APP_USER_PASSWORD: "apppass"     # Contraseña para el usuario de aplicación
+    volumes:
+      - oracle-data:/opt/oracle/oradata # Persistencia de los datos
+
+volumes:
+  oracle-data:
+    driver: local
