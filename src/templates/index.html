@@ -55,7 +55,7 @@
                     
                     <td>
                         <button onclick="eliminar(${r.IDRESERVA})">Eliminar</button>
-                        <button onclick="cancelar(${r.IDRESERVA})">Cancelar Reserva</button>
+                        <button onclick="cancelar(${r.IDRESERVA}, 0)">Cancelar Reserva</button>
                     </td>
                     
                         
@@ -71,9 +71,12 @@
         }
 
         async function cancelar(id) {
-            await fetch(`/reservas/${id}`, { 
+            data = request.get_json()
+            nuevo_estado = data.get("estado")
+            await fetch(`/reservas/${id}/estado`, { 
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
             });
             cargarReservas();
         }
@@ -86,13 +89,19 @@
             for (let clave in datos) datos[clave] = parseInt(datos[clave]);
 
             // Agregar campo cancelación como null
-            datos.fechacancela = null;
+            datos.fechacancelacion = null;
 
-            await fetch('/reservas', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datos)
+            const resp = await fetch('/reservas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
             });
+
+            if (!resp.ok) {
+                const error = await resp.json();
+                alert("Error al guardar la reserva: " + (error.error || resp.statusText));
+                return;
+            }
 
             e.target.reset();
             cargarReservas();

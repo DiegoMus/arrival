@@ -20,6 +20,7 @@ def styles(filename):
 @app.route('/reservas', methods=['POST'])
 def crear_reserva():
     data = request.json
+    print("entro a resrvas post")
     try:
         with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
             with conn.cursor() as cur:
@@ -37,6 +38,7 @@ def crear_reserva():
                 #""", data)
 
                 cur.callproc("CREAR_RESERVA", [
+                    None,
                     data['asientos'],
                     data['estado'],
                     data.get('fechacancelacion'),  # puede ser null
@@ -56,6 +58,7 @@ def crear_reserva():
 # 🔹 Leer todas las reservas
 @app.route('/reservas', methods=['GET'])
 def obtener_reservas():
+    print("entro en reservas")
     try:
         with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
             with conn.cursor() as cur:
@@ -86,7 +89,7 @@ def obtener_reserva(id):
 @app.route('/reservas/<int:id>/estado', methods=['PUT'])
 def actualizar_estado_reserva(id):
     data = request.json
-    nuevo_estado = 3
+    nuevo_estado = data.get("estado")
 
     if nuevo_estado is None:
         return jsonify({"error": "El campo 'estado' es requerido"}), 400
