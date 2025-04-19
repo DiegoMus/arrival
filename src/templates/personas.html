@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Personas</title>
+    <link rel="stylesheet" href="{{ url_for('styles', filename='style.css') }}">
+   
+
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+</head>
+<body class="container mt-5">
+
+    <h1 class="mb-4">Boleto - Personas</h1>
+
+    <form id="form-persona" class="row g-3">
+        
+        <input type="hidden" id="idpersona">
+        <div class="col-md-4">
+            <input type="text" class="form-control" id="nombre" placeholder="Nombre" required>
+        </div>
+        <div class="col-md-4">
+            <input type="text" class="form-control" id="apellido" placeholder="Apellido" required>
+        </div>
+        <div class="col-md-2">
+            <input type="number" class="form-control" id="edad" placeholder="Edad" required>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Guardar</button>
+        </div>
+    </form>
+
+    <hr>
+
+    <table class="table table-bordered mt-4">
+        <thead class="table-dark">
+            <input name="idreserva" value="{{ idreserva }}">
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>DPI</th>
+                <th>VACUNAS</th>
+                <th>FECHA DE NAC</th>
+                
+                
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-personas"></tbody>
+    </table>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const idReserva = params.get('idreserva');
+
+        async function cargarPersonas() {
+            const res = await fetch(`/pasajero/${idReserva}`);
+
+            const personas = await res.json();
+            const cuerpo = document.getElementById('tabla-personas');
+            cuerpo.innerHTML = '';
+            personas.forEach(p => {
+                cuerpo.innerHTML += `
+                    <tr>
+                        <td>${p.IDPASAJERO}</td>
+                        <td>${p.NOMBRE}</td>
+                        <td>${p.APELLIDO}</td>
+                        <td>${p.DPI}</td>
+                        <td>${p.VACUNAS}</td>
+                        <td>${p.NACIMIENTO}</td>
+                        
+                        
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick='editar(${JSON.stringify(p)})'>Editar</button>
+                            <button class="btn btn-sm btn-danger" onclick='eliminar(${p.IDPERSONA})'>Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('form-persona').addEventListener('submit', async e => {
+            e.preventDefault();
+            const id = document.getElementById('idpasajero').value;
+            const datos = {
+                nombre: document.getElementById('nombre').value,
+                apellido: document.getElementById('apellido').value,
+                edad: parseInt(document.getElementById('edad').value)
+            };
+
+            if (id) {
+                await fetch(`/personas/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+            } else {
+                await fetch('/personas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+            }
+
+            e.target.reset();
+            document.getElementById('idpersona').value = '';
+            cargarPersonas();
+        });
+
+        function editar(persona) {
+            document.getElementById('idpasajero').value = persona.IDPASAJERO;
+            document.getElementById('nombre').value = persona.NOMBRE;
+            document.getElementById('apellido').value = persona.APELLIDO;
+            document.getElementById('edad').value = persona.EDAD;
+        }
+
+        async function eliminar(id) {
+            if (confirm('¿Estás seguro de eliminar esta persona?')) {
+                await fetch(`/personas/${id}`, { method: 'DELETE' });
+                cargarPersonas();
+            }
+        }
+
+        cargarPersonas();
+    </script>
+
+</body>
+</html>

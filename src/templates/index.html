@@ -10,11 +10,9 @@
 
     <form id="form-reserva">
         <input type="number" placeholder="Asientos" name="asientos" required>
-        <input type="number" placeholder="Estado" name="estado" required>
         <input type="number" placeholder="Valor Cobro" name="varlocobro" required>
         <input type="number" placeholder="Valor Total" name="valortotal" required>
         <input type="number" placeholder="ID Cliente" name="idcliente" required>
-        <input type="number" placeholder="ID Estado" name="idestado" required>
         <input type="number" placeholder="ID Tarjeta" name="idtarjeta" required>
         <input type="number" placeholder="ID Vuelo" name="idvuelo" required>
         <button type="submit">Crear Reserva</button>
@@ -29,6 +27,9 @@
                 <th>Valor Total</th>
                 <th>IDCLIENTE</th>
                 <th>IDESTADO</th>
+                <th>CLIENTE</th>
+                    
+
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -47,15 +48,18 @@
                 fila.innerHTML = `
                     <td>${r.IDRESERVA}</td>
                     <td>${r.ASIENTOS}</td>
-                    <td>${r.ESTADO}</td>
-                    <td>${r.VALORTOTAL}</td>
+                    <td>${r.DESCRIPCION}</td>
+                    <td>$. ${r.VALORTOTAL}</td>
                     <td>${r.IDCLIENTE}</td>
-                    <td>${r.IDESTADO}</td>
+                    <td>${r.IDESTADO}</td> 
+                    <td>${r.NOMBRE}  ${r.APELLIDO} </td>
+                    
 
                     
                     <td>
                         <button onclick="eliminar(${r.IDRESERVA})">Eliminar</button>
-                        <button onclick="cancelar(${r.IDRESERVA}, 0)">Cancelar Reserva</button>
+                        <button onclick="cancelar(${r.IDRESERVA}, 3)">Cancelar Reserva</button>
+                        <button onclick="abrirFormularioPersonas(${r.IDRESERVA})">Registro pasajeros</button>
                     </td>
                     
                         
@@ -70,16 +74,21 @@
             cargarReservas();
         }
 
-        async function cancelar(id) {
-            data = request.get_json()
-            nuevo_estado = data.get("estado")
-            await fetch(`/reservas/${id}/estado`, { 
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datos)
-            });
-            cargarReservas();
+        function abrirFormularioPersonas(idReserva) {
+        window.location.href = `/personas/formulario?idreserva=${idReserva}`;
         }
+
+        async function cancelar(id, nuevo_estado) {
+        const datos = { idestado: nuevo_estado }; // Creamos el cuerpo del PUT
+
+        await fetch(`/reservas/${id}/estado`, { 
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+    });
+
+    cargarReservas(); // Refrescar la tabla
+}
 
 
         document.getElementById('form-reserva').addEventListener('submit', async e => {
