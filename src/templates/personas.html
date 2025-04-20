@@ -14,7 +14,7 @@
 
     <form id="form-persona" class="row g-3">
         
-        <input type="hidden" id="idpersona">
+        <input type="hidden" id="idpasajero">
         <div class="col-md-4">
             <input type="text" class="form-control" id="nombre" placeholder="Nombre" required>
         </div>
@@ -22,18 +22,28 @@
             <input type="text" class="form-control" id="apellido" placeholder="Apellido" required>
         </div>
         <div class="col-md-2">
-            <input type="number" class="form-control" id="edad" placeholder="Edad" required>
+            <input type="text" class="form-control" id="dpi" placeholder="DPI" required>
+        </div>
+        <div class="col-md-2">
+            <input type="date" class="form-control" id="fecha" placeholder="Fecha" required>
+        </div>
+        <div class="col-md-2">
+            <input type="number" class="form-control" id="vacunas" placeholder="Vacunas" required>
+        </div>
+        <div class="col-md-2">  
+            <input name="idreserva" id="reserva" value="{{ idreserva }}">
         </div>
         <div class="col-md-2">
             <button type="submit" class="btn btn-primary w-100">Guardar</button>
         </div>
+
     </form>
 
     <hr>
 
     <table class="table table-bordered mt-4">
         <thead class="table-dark">
-            <input name="idreserva" value="{{ idreserva }}">
+          
             <tr>
                 <th>ID</th>
                 <th>Nombre</th>
@@ -53,7 +63,7 @@
         const params = new URLSearchParams(window.location.search);
         const idReserva = params.get('idreserva');
 
-        async function cargarPersonas() {
+        /*async function cargarPersonas() {
             const res = await fetch(`/pasajero/${idReserva}`);
 
             const personas = await res.json();
@@ -77,6 +87,37 @@
                     </tr>
                 `;
             });
+        }*/
+
+        async function cargarPersonas() {
+        const res = await fetch(`/pasajero/${idReserva}`);
+        const data = await res.json();
+        console.log("Respuesta del servidor:", data); // 🔍
+
+        if (!Array.isArray(data)) {
+        console.error("La respuesta no es un array:", data);
+        return;
+        }
+
+        const cuerpo = document.getElementById('tabla-personas');
+        cuerpo.innerHTML = '';
+
+        data.forEach(p => {
+        cuerpo.innerHTML += `
+            <tr>
+                <td>${p.IDPASAJERO}</td>
+                <td>${p.NOMBRE}</td>
+                <td>${p.APELLIDO}</td>
+                <td>${p.DPI}</td>
+                <td>${p.VACUNAS}</td>
+                <td>${p.NACIMIENTO}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick='editar(${JSON.stringify(p)})'>Editar</button>
+                    <button class="btn btn-sm btn-danger" onclick='eliminar(${p.IDPASAJERO})'>Eliminar</button>
+                </td>
+            </tr>
+            `;
+        });
         }
 
         document.getElementById('form-persona').addEventListener('submit', async e => {
@@ -85,7 +126,10 @@
             const datos = {
                 nombre: document.getElementById('nombre').value,
                 apellido: document.getElementById('apellido').value,
-                edad: parseInt(document.getElementById('edad').value)
+                dpi: document.getElementById('dpi').value,
+                vacunas: parseInt(document.getElementById('vacunas').value),
+                nacimiento: document.getElementById('fecha').value + ' 00:00:00.000', 
+                idreserva: parseInt(document.getElementById('reserva').value)              
             };
 
             if (id) {
@@ -103,7 +147,7 @@
             }
 
             e.target.reset();
-            document.getElementById('idpersona').value = '';
+            document.getElementById('idpasajero').value = '';
             cargarPersonas();
         });
 
@@ -111,7 +155,7 @@
             document.getElementById('idpasajero').value = persona.IDPASAJERO;
             document.getElementById('nombre').value = persona.NOMBRE;
             document.getElementById('apellido').value = persona.APELLIDO;
-            document.getElementById('edad').value = persona.EDAD;
+            document.getElementById('vacunas').value = persona.EDAD;
         }
 
         async function eliminar(id) {

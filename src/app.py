@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory
+from datetime import datetime
 import oracledb
 
 app = Flask(__name__, static_url_path='/static')
@@ -162,18 +163,15 @@ def obtener_personas():
 
 
 # Obtener una persona por ID
-@app.route('/pasajero/<int:id>', methods=['GET'])
-def obtener_persona(id):
+@app.route('/pasajero/<int:idreserva>', methods=['GET'])
+def obtener_persona(idreserva):
     try:
         with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT * FROM PASAJERO WHERE IDRESERVA = :id", {"id": id})
-                fila = cur.fetchone()
-                if fila:
-                    columnas = [col[0] for col in cur.description]
-                    return jsonify(dict(zip(columnas, fila)))
-                else:
-                    return jsonify({"mensaje": "Persona no encontrada"}), 404
+                cur.execute("SELECT * FROM PASAJERO WHERE IDRESERVA = :id", {"id": idreserva})
+                columnas = [col[0] for col in cur.description]
+                datos = [dict(zip(columnas, fila)) for fila in cur.fetchall()]
+                return jsonify(datos)  # esto ya es una lista
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -184,9 +182,14 @@ def crear_persona():
     try:
         with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
             with conn.cursor() as cur:
+         
+                data["nacimiento"] = datetime.strptime(data["nacimiento"], "%Y-%m-%d %H:%M:%S.%f")
+                print("Nacimiento recibido:", data["nacimiento"], type(data["nacimiento"]))
+
+
                 cur.execute("""
                     INSERT INTO PASAJERO (NOMBRE, APELLIDO, DPI, VACUNAS, NACIMIENTO, IDRESERVA)
-                    VALUES (:nombre, :apellido, :dpi, :vacunas, SYSDATE, :idreserva)
+                    VALUES (:nombre, :apellido, :dpi, :vacunas, :nacimiento, :idreserva)
                 """, data)
             conn.commit()
         return jsonify({"mensaje": "Persona creada"}), 201
@@ -194,6 +197,39 @@ def crear_persona():
         return jsonify({"error": str(e)}), 500
 
 # 🔹 Actualizar persona
+
+# 🔹 Actualizar persona
+@app.route('/personas/<int:id>', methods=['PUT'])
+def actualizar_persona(id):
+    data = request.json
+    try:
+        with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE PERSONA
+                    SET NOMBRE = :nombre,
+                        APELLIDO = :apellido,
+                        EDAD = :edad
+                    WHERE IDPERSONA = :id
+                """, {**data, "id": id})
+            conn.commit()
+        return jsonify({"mensaje": "Persona actualizada"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# 🔹 Eliminar persona
+@app.route('/personas/<int:id>', methods=['DELETE'])
+def eliminar_persona(id):
+    try:
+        with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM PASAJERO WHERE IDPASAJERO = :id", {"id": id})
+            conn.commit()
+        return jsonify({"mensaje": "Persona eliminada"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 
 
 #------ iniciación -------- 
