@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Personas</title>
-    <link rel="stylesheet" href="{{ url_for('styles', filename='style.css') }}">
    
+   
+    <link rel="stylesheet" href="{{ url_for('styles', filename='style.css') }}">
 
     <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
 </head>
@@ -112,13 +113,21 @@
                 <td>${p.VACUNAS}</td>
                 <td>${p.NACIMIENTO}</td>
                 <td>
-                    <button class="btn btn-sm btn-warning" onclick='editar(${JSON.stringify(p)})'>Editar</button>
+                 <!--   <button class="btn btn-sm btn-warning" onclick='editar(${JSON.stringify(p)})'>Editar</button> -->
                     <button class="btn btn-sm btn-danger" onclick='eliminar(${p.IDPASAJERO})'>Eliminar</button>
+                    <button class="btn btn-sm btn-danger" onclick='abrirFormularioBoleto(${p.IDPASAJERO})'>Boleto</button>
+            
+                    
                 </td>
             </tr>
             `;
         });
         }
+
+        function abrirFormularioBoleto(idPasajero) {
+        window.location.href = `/boleto/formulario?idpasajero=${idPasajero}`;
+        }
+
 
         document.getElementById('form-persona').addEventListener('submit', async e => {
             e.preventDefault();

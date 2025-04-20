@@ -232,6 +232,80 @@ def eliminar_persona(id):
 
 
 
+#####  Boletos ########
+
+@app.route('/boletos', methods=['POST'])
+def crear_boleto():
+    try:
+        data = request.get_json()
+        print("Datos recibidos:", data)  # ✅ debug real, no asignación
+
+        # Validación básica
+        campos_requeridos = ['NO_ASIENTO', 'COSTO', 'IDPASAJERO', 'IDVUELO', 'PAIS_ORIGEN', 'PAIS_DESTINO']
+        for campo in campos_requeridos:
+            if campo not in data:
+                return jsonify({"error": f"Falta el campo requerido: {campo}"}), 400
+
+        with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO BOLETO (
+                        IDBOLETO,
+                        NO_ASIENTO,
+                        COSTO,
+                        IDPASAJERO,
+                        IDVUELO,
+                        PAIS_ORIGEN,
+                        PAIS_DESTINO
+                    ) VALUES (
+                        SEQ_BOLETO.NEXTVAL,
+                        :no_asiento,
+                        :costo,
+                        :idpasajero,
+                        :idvuelo,
+                        :pais_origen,
+                        :pais_destino
+                    )
+                """,
+                no_asiento=data['NO_ASIENTO'],
+                costo=data['COSTO'],
+                idpasajero=data['IDPASAJERO'],
+                idvuelo=data['IDVUELO'],
+                pais_origen=data['PAIS_ORIGEN'],
+                pais_destino=data['PAIS_DESTINO'])
+
+            conn.commit()
+            return jsonify({"mensaje": "Boleto creado exitosamente"}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/dashboard')
+def resumen_pasajeros():
+    try:
+        with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT 
+                        v.IDVUELO AS vuelo,
+                        COUNT(p.IDPASAJERO) AS numero,
+                        p2.NOMBRE AS PAISORIGEN,
+                        p3.NOMBRE AS PAISDESTINO
+
+                    FROM PASAJERO p
+                    JOIN RESERVA r ON p.IDRESERVA = r.IDRESERVA
+                    JOIN VUELO v ON v.IDVUELO = r.IDVUELO
+                    JOIN PAIS p2 ON	v.PAIS_ORIGEN = p2.IDPAIS 
+                    JOIN PAIS p3 ON v.PAIS_DESTINO =p3.IDPAIS 
+                    WHERE r.IDESTADO = 1
+                    GROUP BY v.IDVUELO, p2.NOMBRE, p3.NOMBRE 
+                """)
+                columnas = [col[0] for col in cursor.description]
+                resultados = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
+                return render_template('dashboard.html', datos=resultados)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 #------ iniciación -------- 
 
 @app.route('/')
@@ -244,6 +318,12 @@ def index():
 def formulario_personas():
     idreserva = request.args.get('idreserva')
     return render_template('personas.html', idreserva=idreserva)
+
+@app.route('/boleto/formulario')
+def formulario_boleto():
+    idpasajero = request.args.get('idpasajero')
+    return render_template('boleto.html', idpasajero=idpasajero)
+
 
 
 # 🔸 Iniciar servidor

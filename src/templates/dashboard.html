@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Resumen de Pasajeros por Vuelo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Resumen de Pasajeros por Vuelo</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID Vuelo</th>
+                <th>Total Pasajeros</th>
+                <th>País de Origen</th>
+                <th>País de Destino</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fila in datos %}
+            <tr>
+                <td>{{ fila.VUELO }}</td>
+                <td>{{ fila.NUMERO }}</td>
+                <td>{{ fila.PAISORIGEN }}</td>
+                <td>{{ fila.PAISDESTINO }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

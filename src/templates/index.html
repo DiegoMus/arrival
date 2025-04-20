@@ -25,8 +25,6 @@
                 <th>Asientos</th>
                 <th>Estado</th>
                 <th>Valor Total</th>
-                <th>IDCLIENTE</th>
-                <th>IDESTADO</th>
                 <th>CLIENTE</th>
                     
 
@@ -50,14 +48,12 @@
                     <td>${r.ASIENTOS}</td>
                     <td>${r.DESCRIPCION}</td>
                     <td>$. ${r.VALORTOTAL}</td>
-                    <td>${r.IDCLIENTE}</td>
-                    <td>${r.IDESTADO}</td> 
                     <td>${r.NOMBRE}  ${r.APELLIDO} </td>
                     
 
                     
                     <td>
-                        <button onclick="eliminar(${r.IDRESERVA})">Eliminar</button>
+                
                         <button onclick="cancelar(${r.IDRESERVA}, 3)">Cancelar Reserva</button>
                         <button onclick="abrirFormularioPersonas(${r.IDRESERVA})">Registro pasajeros</button>
                     </td>
