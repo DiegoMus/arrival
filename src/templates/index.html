@@ -12,9 +12,10 @@
         <input type="number" placeholder="Asientos" name="asientos" required>
         <input type="number" placeholder="Valor Cobro" name="varlocobro" required>
         <input type="number" placeholder="Valor Total" name="valortotal" required>
-        <input type="number" placeholder="ID Cliente" name="idcliente" required>
-        <input type="number" placeholder="ID Tarjeta" name="idtarjeta" required>
-        <input type="number" placeholder="ID Vuelo" name="idvuelo" required>
+        <input type="number" placeholder="ID Cliente" name="idcliente" value="{{ idcliente }}" required>
+
+        <input type="number" placeholder="ID Tarjeta" name="idtarjeta" value="{{ idtarjeta }}" required>
+        <input type="number" placeholder="ID Vuelo" name="idvuelo" value="{{ idvuelo }}" required>
         <button type="submit">Crear Reserva</button>
     </form>
 
@@ -35,6 +36,12 @@
     </table>
 
     <script>
+
+       
+
+        document.getElementById('idcliente').value = idCliente;
+
+
         async function cargarReservas() {
             const res = await fetch('/reservas');
             const reservas = await res.json();

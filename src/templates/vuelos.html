@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Tarjetas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="container mt-5">
+
+    <h2 class="mb-4">Vuelos</h2>
+
+    <form id="form-tarjeta" class="row g-3">
+        <div class="col-md-4">
+            <input name="descripcion" id="descripcion"  value="{{ idtarjeta }}" >
+        </div>
+        <div class="col-md-4">
+            <input name="idCliente" id="idcliente"  value="{{ idcliente }}">
+        </div>
+
+
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-success w-100">Guardar</button>
+        </div>
+    </form>
+
+    <div id="mensaje" class="mt-3"></div>
+
+    <h3 class="mt-5">Listado de Vuelos</h3>
+    <table id="tabla-vuelos" class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID Vuelo</th>
+                <th>Descripción</th>
+                <th>Descripción</th>
+                <th>IDAvion</th>
+                <th>PAIS_ORIGEN</th>
+                <th>PAIS_DESTINO</th>
+                <th>FECHA</th>
+                
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Las filas de tarjetas se insertarán aquí dinámicamente -->
+        </tbody>
+    </table>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const idTarjeta = params.get('idtarjeta');
+        const idCliente = params.get('idcliente');
+
+
+        document.getElementById('idcliente').value = idCliente;
+        document.getElementById('descripcion').value = idTarjeta;
+
+        async function cargarVuelos() {
+            try {
+                const res = await fetch(`/vuelo`);
+                const vuelos = await res.json();
+
+                const tbody = document.querySelector('#tabla-vuelos tbody');
+                tbody.innerHTML = '';
+
+                vuelos.forEach(t => {
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                        <td>${t.IDVUELO}</td>
+                        <td>${t.DESCRIPCION}</td>
+                        <td>${t.DISPONIBILIDAD}</td>
+                        <td>${t.IDAVION}</td>
+                        <td>${t.PAIS_ORIGEN}</td>
+                        <td>${t.PAIS_DESTINO}</td>
+                        <td>${t.FECHA_SALIDA}</td>
+                        <td>
+                            <button onclick="reserva(${t.IDVUELO}, ${idCliente}, ${idTarjeta})" class="btn btn-danger btn-sm">Reservar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(fila);
+                });
+            } catch (error) {
+                document.getElementById('mensaje').innerHTML =
+                    `<div class="alert alert-danger">Error al cargar las Vuelos.</div>`;
+            }
+        }
+
+
+        async function reserva(idVuelo, idCliente, idTarjeta) {
+            window.location.href = `/reserva/formulario?idvuelo=${idVuelo}&idcliente=${idCliente}&idtarjeta=${idTarjeta}`;
+        }
+        document.getElementById('form-tarjeta').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const datos = {
+                DESCRIPCION: document.getElementById('descripcion').value,
+                IDCLIENTE: idCliente
+            };
+
+            try {
+                const res = await fetch('/tarjeta', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+
+                const respuesta = await res.json();
+
+                if (res.ok) {
+                    document.getElementById('mensaje').innerHTML =
+                        `<div class="alert alert-success">${respuesta.mensaje}</div>`;
+                    e.target.reset();
+                    cargarTarjetas();
+                } else {
+                    document.getElementById('mensaje').innerHTML =
+                        `<div class="alert alert-danger">Error: ${respuesta.error}</div>`;
+                }
+            } catch (err) {
+                document.getElementById('mensaje').innerHTML =
+                    `<div class="alert alert-danger">Error de red o servidor.</div>`;
+            }
+        });
+
+        // Cargar las tarjetas al cargar la página
+        cargarVuelos();
+    </script>
+</body>
+</html>

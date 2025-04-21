@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Clientes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Clientes</h1>
+
+    <form id="form-cliente">
+        <input type="text" name="nombre" placeholder="Nombre" required>
+        <input type="text" name="apellido" placeholder="Apellido" required>
+        <input type="text" name="telefono" placeholder="Teléfono" required>
+        <input type="text" name="dpi" placeholder="DPI" required>
+        <button type="submit">Agregar Cliente</button>
+    </form>
+
+    <table id="tabla-clientes">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>DPI</th>
+                <th>Teléfono</th>
+              
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        async function cargarClientes() {
+            const res = await fetch('/clientes');
+            const clientes = await res.json();
+            const cuerpo = document.querySelector('#tabla-clientes tbody');
+            cuerpo.innerHTML = '';
+
+            clientes.forEach(c => {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td>${c.IDCLIENTE}</td>
+                    <td>${c.NOMBRE}</td>
+                    <td>${c.APELLIDO}</td>
+                    <td>${c.DPI}</td>
+                    <td>${c.TELEFONO}</td>
+                    <td>
+                        <button onclick="editarCliente(${c.IDCLIENTE})">Editar</button>
+                        <button onclick="eliminarCliente(${c.IDCLIENTE})">Eliminar</button>
+                        <button onclick="registrotarjeta(${c.IDCLIENTE})">Metodos de Pago</button>
+                    </td>
+                `;
+                cuerpo.appendChild(fila);
+            });
+        }
+
+
+        async function registrotarjeta(idCliente) {
+            window.location.href = `/tarjeta/formulario?idcliente=${idCliente}`;            
+        }
+
+        async function eliminarCliente(id) {
+            await fetch(`/clientes/${id}`, { method: 'DELETE' });
+            cargarClientes();
+        }
+
+        function editarCliente(id) {
+            // Aquí puedes implementar la lógica para editar un cliente
+            // Por ejemplo, abrir un formulario modal con los datos del cliente
+            alert('Funcionalidad de edición no implementada aún.');
+        }
+
+        document.getElementById('form-cliente').addEventListener('submit', async e => {
+            e.preventDefault();
+            const datos = Object.fromEntries(new FormData(e.target).entries());
+
+            const resp = await fetch('/clientes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+
+            if (!resp.ok) {
+                const error = await resp.json();
+                alert("Error al guardar el cliente: " + (error.error || resp.statusText));
+                return;
+            }
+
+            e.target.reset();
+            cargarClientes();
+        });
+
+        cargarClientes();
+    </script>
+</body>
+</html>

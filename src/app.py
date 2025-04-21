@@ -196,7 +196,86 @@ def crear_persona():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 🔹 Actualizar persona
+# INGRESO DE CLIENTE
+
+@app.route('/clientes', methods=['GET'])
+def obtener_clientes():
+    try:
+        with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT IDCLIENTE, NOMBRE, APELLIDO, DPI, TELEFONO FROM CLIENTE")
+                clientes = cursor.fetchall()
+                resultado = []
+                for c in clientes:
+                    resultado.append({
+                        'IDCLIENTE': c[0],
+                        'NOMBRE': c[1],
+                        'APELLIDO': c[2],
+                        'DPI': c[3], 
+                        'TELEFONO': c[4]
+                    })
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/clientes', methods=['POST'])
+def crear_cliente():
+    datos = request.get_json()
+    try:
+        with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO CLIENTE (IDCLIENTE, NOMBRE, APELLIDO, DPI, TELEFONO)
+                    VALUES (SEQ_CLIENTE.NEXTVAL, :nombre, :apellido, :dpi, :telefono)
+                """, nombre=datos['nombre'], apellido=datos['apellido'], dpi=datos['dpi'], telefono=datos['telefono'])
+            conn.commit()
+        return jsonify({'mensaje': 'Cliente creado exitosamente'}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/clientes/<int:id>', methods=['DELETE'])
+def eliminar_cliente(id):
+    try:
+        with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM CLIENTE WHERE IDCLIENTE = :id", id=id)
+            conn.commit()
+        return jsonify({'mensaje': 'Cliente eliminado exitosamente'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# INGRESO DE TARJETA
+
+@app.route('/tarjeta', methods=['POST'])
+def crear_tarjeta():
+    data = request.json
+    try:
+        with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO TARJETA (DESCRIPCION, IDCLIENTE)
+                    VALUES (:descripcion, :idcliente)
+                """, data)
+            conn.commit()
+        return jsonify({"mensaje": "Tarjeta registrada"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# LISTAR TARJETAS
+
+@app.route('/tarjetas/<int:idcliente>', methods=['GET'])
+def obtener_tarjeta(idcliente):
+    try:
+        with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM TARJETA WHERE IDCLIENTE = :id", {"id": idcliente})
+                columnas = [col[0] for col in cur.description]
+                datos = [dict(zip(columnas, fila)) for fila in cur.fetchall()]
+                return jsonify(datos)  # esto ya es una lista
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 # 🔹 Actualizar persona
 @app.route('/personas/<int:id>', methods=['PUT'])
@@ -305,14 +384,45 @@ def resumen_pasajeros():
                 return render_template('dashboard.html', datos=resultados)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+## vuelos
+
+@app.route('/vuelo', methods=['GET'])
+def obtener_vuelos():
+    try:
+        with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM VUELO")
+                clientes = cursor.fetchall()
+                resultado = []
+                for c in clientes:
+                    resultado.append({
+                        'IDVUELO': c[0],
+                        'DESCRIPCION': c[1],
+                        'DISPONIBILIDAD': c[2],
+                        'IDAVION': c[3],
+                        'PAIS_ORIGEN': c[4],
+                        'PAIS_DESTINO': c[5],
+                        'IDPAIS': c[6],
+                        'FECHA_SALIDA': c[7]
+                        
+                    })
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 #------ iniciación -------- 
 
-@app.route('/')
+@app.route('/reserva/formulario')
 def index():
-    return render_template('index.html')
+    idtarjeta = request.args.get('idtarjeta')
+    idvuelo = request.args.get('idvuelo')
+    idcliente = request.args.get('idcliente')
+    return render_template('index.html', idcliente=idcliente, idtarjeta=idtarjeta, idvuelo=idvuelo)
 
-#------ personas ----------
+#------ FRONTEND LOAD ----------
 
 @app.route('/personas/formulario')
 def formulario_personas():
@@ -324,7 +434,20 @@ def formulario_boleto():
     idpasajero = request.args.get('idpasajero')
     return render_template('boleto.html', idpasajero=idpasajero)
 
+@app.route('/cliente/formulario')
+def formulario_cliente():
+    return render_template('cliente.html')
 
+@app.route('/tarjeta/formulario')
+def formulario_tarjeta():
+    idcliente = request.args.get('idcliente')
+    return render_template('tarjeta.html')
+
+@app.route('/vuelo/formulario')
+def formulario_vuelo():
+    idtarjeta = request
+    return render_template('vuelos.html')
+    
 
 # 🔸 Iniciar servidor
 if __name__ == '__main__':

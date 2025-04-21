@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Tarjetas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="container mt-5">
+
+    <h2 class="mb-4">Registrar Tarjeta</h2>
+
+    <form id="form-tarjeta" class="row g-3">
+        <div class="col-md-4">
+            <input type="text" id="descripcion" class="form-control" placeholder="Descripción de la Tarjeta" required>
+        </div>
+        <div class="col-md-4">
+            <input type="text" id="idcliente" class="form-control" placeholder="ID Cliente" required>
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-success w-100">Guardar</button>
+        </div>
+    </form>
+
+    <div id="mensaje" class="mt-3"></div>
+
+    <h3 class="mt-5">Listado de Tarjetas</h3>
+    <table id="tabla-tarjetas" class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID Tarjeta</th>
+                <th>Descripción</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Las filas de tarjetas se insertarán aquí dinámicamente -->
+        </tbody>
+    </table>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const idCliente = params.get('idcliente');
+
+        document.getElementById('idcliente').value = idCliente;
+
+        async function cargarTarjetas() {
+            try {
+                const res = await fetch(`/tarjetas/${idCliente}`);
+                const tarjetas = await res.json();
+
+                const tbody = document.querySelector('#tabla-tarjetas tbody');
+                tbody.innerHTML = '';
+
+                tarjetas.forEach(t => {
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                        <td>${t.IDTARJETA}</td>
+                        <td>${t.DESCRIPCION}</td>
+                        <td>
+                            <button onclick="eliminarTarjeta(${t.IDTARJETA})" class="btn btn-danger btn-sm">Eliminar</button>
+                            <button onclick="vuelo(${t.IDTARJETA})" class="btn btn-danger btn-sm">SeleccioneVuelo</button>
+                            
+                        </td>
+                    `;
+                    tbody.appendChild(fila);
+                });
+            } catch (error) {
+                document.getElementById('mensaje').innerHTML =
+                    `<div class="alert alert-danger">Error al cargar las tarjetas.</div>`;
+            }
+        }
+
+        async function vuelo(idTarjeta) {
+            window.location.href = `/vuelo/formulario?idtarjeta=${idTarjeta}&idcliente=${idCliente}`;
+        }
+
+        async function eliminarTarjeta(idTarjeta) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta tarjeta?')) {
+                try {
+                    const res = await fetch(`/tarjeta/${idTarjeta}`, {
+                        method: 'DELETE'
+                    });
+
+                    const respuesta = await res.json();
+
+                    if (res.ok) {
+                        document.getElementById('mensaje').innerHTML =
+                            `<div class="alert alert-success">${respuesta.mensaje}</div>`;
+                        cargarTarjetas();
+                    } else {
+                        document.getElementById('mensaje').innerHTML =
+                            `<div class="alert alert-danger">Error: ${respuesta.error}</div>`;
+                    }
+                } catch (error) {
+                    document.getElementById('mensaje').innerHTML =
+                        `<div class="alert alert-danger">Error de red o servidor.</div>`;
+                }
+            }
+        }
+
+        document.getElementById('form-tarjeta').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const datos = {
+                DESCRIPCION: document.getElementById('descripcion').value,
+                IDCLIENTE: idCliente
+            };
+
+            try {
+                const res = await fetch('/tarjeta', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+
+                const respuesta = await res.json();
+
+                if (res.ok) {
+                    document.getElementById('mensaje').innerHTML =
+                        `<div class="alert alert-success">${respuesta.mensaje}</div>`;
+                    e.target.reset();
+                    cargarTarjetas();
+                } else {
+                    document.getElementById('mensaje').innerHTML =
+                        `<div class="alert alert-danger">Error: ${respuesta.error}</div>`;
+                }
+            } catch (err) {
+                document.getElementById('mensaje').innerHTML =
+                    `<div class="alert alert-danger">Error de red o servidor.</div>`;
+            }
+        });
+
+        // Cargar las tarjetas al cargar la página
+        cargarTarjetas();
+    </script>
+</body>
+</html>
