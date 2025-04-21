@@ -220,14 +220,14 @@ def obtener_clientes():
 
 @app.route('/clientes', methods=['POST'])
 def crear_cliente():
-    datos = request.get_json()
+    datos = request.json
     try:
         with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as conn:
             with conn.cursor() as cursor:
                 cursor.execute("""
                     INSERT INTO CLIENTE (IDCLIENTE, NOMBRE, APELLIDO, DPI, TELEFONO)
                     VALUES (SEQ_CLIENTE.NEXTVAL, :nombre, :apellido, :dpi, :telefono)
-                """, nombre=datos['nombre'], apellido=datos['apellido'], dpi=datos['dpi'], telefono=datos['telefono'])
+                """, datos)
             conn.commit()
         return jsonify({'mensaje': 'Cliente creado exitosamente'}), 201
     except Exception as e:
